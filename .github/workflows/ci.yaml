@@ -1,0 +1,31 @@
+name: Complete Devops Project Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build_and_push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set short SHA
+        id: vars
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
+      - name: Login to Dockerhub
+        # Note: Secrets must be plurals: ${{ secrets.VAR }}
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        # Replace 'your-dockerhub-username' with your actual Docker Hub handle
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/devopsproject:${{ env.SHORT_SHA }} .
+
+      - name: Push to Dockerhub
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/devopsproject:${{ env.SHORT_SHA }}
